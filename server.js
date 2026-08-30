@@ -197,7 +197,16 @@ function serveStatic(req, res, urlPath) {
       return res.end("404 — file tidak ditemukan");
     }
     const ext = path.extname(filePath).toLowerCase();
-    res.writeHead(200, { "Content-Type": MIME[ext] || "application/octet-stream" });
+    const headers = { "Content-Type": MIME[ext] || "application/octet-stream" };
+    // Gambar/aset di-cache lama; HTML selalu divalidasi agar update cepat tampil.
+    if (/\.(png|jpg|jpeg|webp|svg|ico)$/.test(ext)) {
+      headers["Cache-Control"] = "public, max-age=604800";
+    } else if (/\.(css|js)$/.test(ext)) {
+      headers["Cache-Control"] = "public, max-age=86400";
+    } else if (ext === ".html") {
+      headers["Cache-Control"] = "no-cache";
+    }
+    res.writeHead(200, headers);
     if (req.method === "HEAD") return res.end();
     fs.createReadStream(filePath).pipe(res);
   });
