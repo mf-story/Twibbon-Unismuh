@@ -90,7 +90,14 @@ function resetTransform() {
   state.rotation = 0;
   state.flip = 1;
   state.tx = SIZE / 2;
-  state.ty = SIZE / 2;
+  // Untuk foto potret, geser sedikit ke bawah agar wajah pas di lingkaran frame,
+  // tanpa menyingkap area kosong di atas (tetap menutupi kanvas).
+  if (state.photo) {
+    const halfH = (state.photo.height / 2) * state.baseScale;
+    state.ty = Math.min(SIZE * 0.58, halfH);
+  } else {
+    state.ty = SIZE / 2;
+  }
   zoomEl.value = "1";
   rotateEl.value = "0";
   zoomVal.textContent = "100%";
