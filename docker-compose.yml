@@ -1,0 +1,16 @@
+services:
+  twibbon:
+    build: .
+    environment:
+      # WAJIB diganti di Coolify: kata sandi panel admin.
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - PORT=3000
+    ports:
+      - "3000"
+    volumes:
+      # Menyimpan frame yang diunggah admin agar tidak hilang saat redeploy.
+      - twibbon-frames:/app/frames
+    restart: unless-stopped
+
+volumes:
+  twibbon-frames:

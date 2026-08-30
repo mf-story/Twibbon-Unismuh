@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b3fa8" />
+  <title>Unismuh Twibbon — Admin Frame</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo-img" src="logo-unismuh.png" alt="Logo Universitas Muhammadiyah Makassar" />
+      <div>
+        <h1>Unismuh Twibbon — Admin</h1>
+        <p>Universitas Muhammadiyah Makassar</p>
+      </div>
+    </div>
+    <a class="link-home" href="index.html">← Ke aplikasi</a>
+  </header>
+
+  <!-- Layar login -->
+  <section class="login-screen" id="loginScreen">
+    <form class="login-card" id="loginForm">
+      <h2>Masuk Admin</h2>
+      <p class="note">Masukkan kata sandi admin untuk mengelola frame.</p>
+      <input type="password" id="password" placeholder="Kata sandi admin" autocomplete="current-password" required />
+      <button class="btn primary" type="submit">Masuk</button>
+      <p class="err" id="loginErr" hidden></p>
+    </form>
+  </section>
+
+  <!-- Panel utama -->
+  <main class="admin-layout" id="adminMain" hidden>
+    <section class="card">
+      <h2 class="section-title">Tambah Frame Baru</h2>
+      <form id="addForm" class="add-form">
+        <div class="field">
+          <label for="frameName">Nama frame</label>
+          <input type="text" id="frameName" maxlength="60" placeholder="mis. Wisuda 2026" required />
+        </div>
+        <div class="field">
+          <label for="frameFile">Gambar frame (PNG transparan, JPG, atau WEBP)</label>
+          <input type="file" id="frameFile" accept="image/png,image/jpeg,image/webp" required />
+          <p class="hint">Disarankan PNG 1080×1080 dengan bagian tengah transparan. Maks 6 MB.</p>
+        </div>
+        <div class="preview-row" id="previewRow" hidden>
+          <img id="previewImg" alt="Pratinjau frame" />
+        </div>
+        <button class="btn primary" type="submit" id="addBtn">⬆ Unggah Frame</button>
+        <p class="err" id="addErr" hidden></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Daftar Frame</h2>
+      <div class="frame-grid" id="frameGrid"></div>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

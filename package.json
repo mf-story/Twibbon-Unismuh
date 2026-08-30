@@ -1,0 +1,10 @@
+{
+  "name": "twibbon-studio",
+  "version": "1.0.0",
+  "description": "Aplikasi Twibbon client-side. Foto digabung dengan frame di browser; hasil tidak disimpan di server.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT"
+}
