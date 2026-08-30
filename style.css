@@ -210,8 +210,26 @@ input[type="range"]::-moz-range-thumb {
 .note { margin: 10px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
 
 @media (max-width: 860px) {
-  .layout { grid-template-columns: 1fr; }
+  .layout {
+    grid-template-columns: 1fr;
+    margin-top: 12px;
+    gap: 12px;
+  }
   .panel { order: 2; }
+  /* Header ikut tergulung agar preview bisa menempel di atas. */
+  .topbar { position: static; }
+  /* Preview menempel di atas saat menggulir ke kontrol penyesuaian. */
+  .stage {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+    padding: 8px 0 10px;
+    gap: 8px;
+  }
+  /* Perkecil sedikit agar kontrol muat terlihat bersama preview. */
+  .canvas-wrap { max-width: 56vh; margin: 0 auto; }
+  .stage-tip { font-size: 12px; }
 }
 
 /* Footer strip logo peringkat & akreditasi */

@@ -198,12 +198,11 @@ function serveStatic(req, res, urlPath) {
     }
     const ext = path.extname(filePath).toLowerCase();
     const headers = { "Content-Type": MIME[ext] || "application/octet-stream" };
-    // Gambar/aset di-cache lama; HTML selalu divalidasi agar update cepat tampil.
+    // Gambar di-cache lama (berat & jarang berubah); CSS/JS selalu divalidasi
+    // agar pembaruan tampilan langsung terlihat tanpa tertahan cache.
     if (/\.(png|jpg|jpeg|webp|svg|ico)$/.test(ext)) {
       headers["Cache-Control"] = "public, max-age=604800";
-    } else if (/\.(css|js)$/.test(ext)) {
-      headers["Cache-Control"] = "public, max-age=86400";
-    } else if (ext === ".html") {
+    } else if (/\.(css|js)$/.test(ext) || ext === ".html") {
       headers["Cache-Control"] = "no-cache";
     }
     res.writeHead(200, headers);
