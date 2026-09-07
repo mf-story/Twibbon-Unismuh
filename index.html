@@ -10,6 +10,13 @@
   <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
+  <!-- PWA: bisa di-install di laptop/HP lewat browser -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Twibbie" />
+
   <!-- Open Graph (WhatsApp, Facebook, dll) -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Twibbie" />
@@ -42,6 +49,7 @@
       </div>
     </div>
     <a class="admin-link" href="admin.html">⚙ Admin</a>
+    <button class="admin-link install-btn" id="installBtn" hidden>⬇ Instal Aplikasi</button>
   </header>
 
   <main class="layout">
