@@ -223,7 +223,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   ensureSeed();
-  console.log(`Twibbon Studio berjalan di http://localhost:${PORT}`);
+  console.log(`Twibbie berjalan di http://localhost:${PORT}`);
   console.log(`Panel admin: http://localhost:${PORT}/admin.html`);
   if (ADMIN_PASSWORD === "admin123") {
     console.log('PERINGATAN: password admin masih default "admin123". Set ADMIN_PASSWORD untuk keamanan.');

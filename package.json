@@ -1,5 +1,5 @@
 {
-  "name": "twibbon-studio",
+  "name": "twibbie",
   "version": "1.0.0",
   "description": "Aplikasi Twibbon client-side. Foto digabung dengan frame di browser; hasil tidak disimpan di server.",
   "main": "server.js",
