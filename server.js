@@ -7,6 +7,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { PassThrough } = require("stream");
+const PImage = require("pureimage");
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
@@ -15,6 +17,8 @@ const FRAMES_DIR = path.join(ROOT, "frames");
 const FRAMES_JSON = path.join(FRAMES_DIR, "frames.json");
 // Data awal (dibuat saat build) untuk mengisi volume yang masih kosong.
 const SEED_DIR = path.join(ROOT, "seed");
+// Lapisan dasar kartu share (latar + logo + teks; frame ditempel dinamis).
+const OG_BASE = path.join(ROOT, "og-base.png");
 // Ganti lewat variabel lingkungan: set ADMIN_PASSWORD=... sebelum start.
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const MAX_UPLOAD_BYTES = 6 * 1024 * 1024; // 6 MB
@@ -178,6 +182,77 @@ async function handleApi(req, res, urlPath) {
   return sendJson(res, 404, { error: "Endpoint tidak ditemukan" });
 }
 
+// ---------- OG image dinamis (kartu share mengikuti frame teratas) ----------
+let ogCache = { src: null, buf: null };
+
+function firstFrameSrc() {
+  const frames = readFrames();
+  return frames[0] ? frames[0].src : null;
+}
+
+async function decodeImage(file) {
+  const ext = path.extname(file).toLowerCase();
+  if (ext === ".png") return PImage.decodePNGFromStream(fs.createReadStream(file));
+  if (ext === ".jpg" || ext === ".jpeg") return PImage.decodeJPEGFromStream(fs.createReadStream(file));
+  return null; // webp tidak didukung dekoder
+}
+
+async function generateOg() {
+  const src = firstFrameSrc();
+  if (!src || !fs.existsSync(OG_BASE)) return null;
+  const framePath = path.join(ROOT, src);
+  if (!fs.existsSync(framePath)) return null;
+
+  const base = await PImage.decodePNGFromStream(fs.createReadStream(OG_BASE));
+  const frame = await decodeImage(framePath);
+  if (!frame) return null;
+
+  const out = PImage.make(1200, 630);
+  const ctx = out.getContext("2d");
+  ctx.drawImage(base, 0, 0, base.width, base.height, 0, 0, 1200, 630);
+  // Frame 540x540 di sisi kanan (selaras dengan og-base.png).
+  ctx.drawImage(frame, 0, 0, frame.width, frame.height, 620, 45, 540, 540);
+
+  const chunks = [];
+  const pass = new PassThrough();
+  pass.on("data", (c) => chunks.push(c));
+  await new Promise((resolve, reject) => {
+    pass.on("end", resolve);
+    pass.on("error", reject);
+    PImage.encodeJPEGToStream(out, pass, 82).catch(reject);
+  });
+  return Buffer.concat(chunks);
+}
+
+async function getOgBuffer() {
+  const src = firstFrameSrc();
+  if (ogCache.buf && ogCache.src === src) return ogCache.buf;
+  const buf = await generateOg();
+  if (buf) ogCache = { src, buf };
+  return buf;
+}
+
+function serveOg(res) {
+  getOgBuffer()
+    .then((buf) => {
+      if (buf) {
+        res.writeHead(200, { "Content-Type": "image/jpeg", "Cache-Control": "no-cache" });
+        return res.end(buf);
+      }
+      // Fallback: sajikan lapisan dasar.
+      if (fs.existsSync(OG_BASE)) {
+        res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "no-cache" });
+        return fs.createReadStream(OG_BASE).pipe(res);
+      }
+      res.writeHead(404);
+      res.end();
+    })
+    .catch(() => {
+      res.writeHead(500);
+      res.end();
+    });
+}
+
 // ---------- Static ----------
 function serveStatic(req, res, urlPath) {
   if (req.method !== "GET" && req.method !== "HEAD") {
@@ -216,6 +291,11 @@ const server = http.createServer((req, res) => {
   const urlPath = decodeURIComponent(req.url.split("?")[0]);
   if (urlPath.startsWith("/api/")) {
     handleApi(req, res, urlPath).catch(() => sendJson(res, 500, { error: "Kesalahan server" }));
+    return;
+  }
+  // Kartu share dibuat dinamis dari frame teratas.
+  if (urlPath === "/og-image.jpg") {
+    serveOg(res);
     return;
   }
   serveStatic(req, res, urlPath);
