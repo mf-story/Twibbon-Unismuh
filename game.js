@@ -270,6 +270,7 @@
     "Idaman Mertua", "Anak Sholeh", "Calon Sukses", "Jomblo Bahagia",
     "Anti Galau", "Rezeki Nomplok", "Bintang Kelas", "Juara Sejati",
     "Good Vibes", "Level Up", "Sultan Muda", "Berprestasi",
+    "OTW Sarjana", "OTW Wisuda", "OTW Dilamar",
   ];
 
   let pipeLabelTop = true; // alternates each spawn for top/bottom labels
