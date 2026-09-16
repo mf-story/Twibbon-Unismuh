@@ -44,6 +44,8 @@
   // ---------- Player & leaderboard ----------
   const NAME_KEY = "voiceFlyGame_name";
   const SCORES_KEY = "voiceFlyGame_scores";
+  const MUTED_KEY = "voiceFlyGame_muted";
+  let muted = localStorage.getItem(MUTED_KEY) === "1";
   let playerName = localStorage.getItem(NAME_KEY) || "";
   nameInput.value = playerName;
   let best = 0;
@@ -432,6 +434,10 @@
     pipes = pipes.filter((p) => p.x + PIPE_WIDTH > -10);
 
     pipes.forEach((p) => {
+      if (!p.whooshed && CHAR_X + CHAR_R > p.x && CHAR_X - CHAR_R < p.x + PIPE_WIDTH) {
+        p.whooshed = true;
+        playWhooshSfx(); // self-gated to tap mode
+      }
       if (!p.passed && p.x + PIPE_WIDTH < CHAR_X - CHAR_R) {
         p.passed = true;
         score++;
@@ -441,7 +447,7 @@
     });
   }
 
-  // ---------- Sound effects (tap/space mode only, generated via Web Audio) ----------
+  // ---------- Sound effects (generated via Web Audio) ----------
   let sfxCtx = null;
   function ensureSfx() {
     if (!sfxCtx) {
@@ -450,8 +456,110 @@
     }
     if (sfxCtx.state === "suspended") sfxCtx.resume();
   }
+  function sfxOn() { return sfxCtx && !muted; }
+
+  // Simple looping chiptune background music (tap mode only, to avoid mic feedback).
+  let musicTimer = null;
+  let musicStep = 0;
+  const MUSIC_SEQ = [
+    262, 330, 392, 523, 392, 330,
+    294, 349, 440, 349, 294, 247,
+  ];
+  function playMusicNote() {
+    if (!sfxOn()) return;
+    const t = sfxCtx.currentTime;
+    const f = MUSIC_SEQ[musicStep % MUSIC_SEQ.length];
+    const o = sfxCtx.createOscillator();
+    const g = sfxCtx.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.05, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    o.connect(g); g.connect(sfxCtx.destination);
+    o.start(t); o.stop(t + 0.24);
+    // soft bass every 3 steps
+    if (musicStep % 3 === 0) {
+      const bo = sfxCtx.createOscillator();
+      const bg = sfxCtx.createGain();
+      bo.type = "sine";
+      bo.frequency.setValueAtTime(f / 2, t);
+      bg.gain.setValueAtTime(0.0001, t);
+      bg.gain.exponentialRampToValueAtTime(0.06, t + 0.03);
+      bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      bo.connect(bg); bg.connect(sfxCtx.destination);
+      bo.start(t); bo.stop(t + 0.32);
+    }
+    musicStep++;
+  }
+  function startMusic() {
+    if (usingMic || !sfxOn()) return; // no music in mic mode (would trigger voice detection)
+    stopMusic();
+    musicStep = 0;
+    playMusicNote();
+    musicTimer = setInterval(playMusicNote, 210);
+  }
+  function stopMusic() {
+    if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
+  }
+
+  // Short ascending "ready-go" beep at the start of a round (tap mode only).
+  function playStartSfx() {
+    if (usingMic || !sfxOn()) return;
+    const t = sfxCtx.currentTime;
+    [[523, 0], [659, 0.1], [880, 0.2]].forEach(([f, d]) => {
+      const o = sfxCtx.createOscillator();
+      const g = sfxCtx.createGain();
+      o.type = "square";
+      o.frequency.setValueAtTime(f, t + d);
+      g.gain.setValueAtTime(0.0001, t + d);
+      g.gain.exponentialRampToValueAtTime(0.16, t + d + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.12);
+      o.connect(g); g.connect(sfxCtx.destination);
+      o.start(t + d); o.stop(t + d + 0.14);
+    });
+  }
+
+  // Triumphant fanfare for a new record (plays in both modes on game over).
+  function playRecordFanfare() {
+    if (!sfxOn()) return;
+    const t = sfxCtx.currentTime;
+    const notes = [[523, 0], [659, 0.12], [784, 0.24], [1047, 0.36]]; // C5 E5 G5 C6
+    notes.forEach(([f, d]) => {
+      const o = sfxCtx.createOscillator();
+      const g = sfxCtx.createGain();
+      o.type = "square";
+      o.frequency.setValueAtTime(f, t + d);
+      g.gain.setValueAtTime(0.0001, t + d);
+      g.gain.exponentialRampToValueAtTime(0.2, t + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.34);
+      o.connect(g); g.connect(sfxCtx.destination);
+      o.start(t + d); o.stop(t + d + 0.36);
+    });
+  }
+
+  // Airy "whoosh" as the character passes a pipe (tap mode only).
+  function playWhooshSfx() {
+    if (usingMic || !sfxOn()) return;
+    const t = sfxCtx.currentTime;
+    const dur = 0.22;
+    const buf = sfxCtx.createBuffer(1, Math.floor(sfxCtx.sampleRate * dur), sfxCtx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+    const src = sfxCtx.createBufferSource(); src.buffer = buf;
+    const bp = sfxCtx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.2;
+    bp.frequency.setValueAtTime(500, t);
+    bp.frequency.exponentialRampToValueAtTime(2600, t + dur);
+    const g = sfxCtx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.14, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(bp); bp.connect(g); g.connect(sfxCtx.destination);
+    src.start(t); src.stop(t + dur);
+  }
+
   function playFlapSfx() {
-    if (!sfxCtx) return;
+    if (!sfxOn()) return;
     const t = sfxCtx.currentTime;
     const o = sfxCtx.createOscillator();
     const g = sfxCtx.createGain();
@@ -466,7 +574,7 @@
   }
   // Two quick ascending blips - classic "point"/coin sound.
   function playScoreSfx() {
-    if (!sfxCtx) return;
+    if (!sfxOn()) return;
     const t = sfxCtx.currentTime;
     [[988, 0], [1319, 0.08]].forEach(([f, d]) => {
       const o = sfxCtx.createOscillator();
@@ -482,7 +590,7 @@
   }
   // A descending "fail" jingle for game over (plays in both mic and tap modes).
   function playGameOverSfx() {
-    if (!sfxCtx) return;
+    if (!sfxOn()) return;
     const t = sfxCtx.currentTime;
     const notes = [[523, 0], [440, 0.18], [349, 0.36], [262, 0.56]]; // C5 A4 F4 C4
     notes.forEach(([f, d]) => {
@@ -498,7 +606,7 @@
     });
   }
   function playCrashSfx() {
-    if (!sfxCtx) return;
+    if (!sfxOn()) return;
     const t = sfxCtx.currentTime;
     const dur = 0.45;
     // noise burst through a falling low-pass filter
@@ -591,6 +699,7 @@
     crashStart = elapsed;
     shakeUntil = elapsed + 0.5;
     hud.classList.add("hidden");
+    stopMusic();
     spawnExplosion();
     if (!usingMic) playCrashSfx(); // crash sound in tap/space mode
   }
@@ -801,6 +910,8 @@
     mode = "playing";
     showScreen(null);
     hud.classList.remove("hidden");
+    playStartSfx();
+    startMusic();
     lastTime = performance.now();
     if (rafId) cancelAnimationFrame(rafId);
     rafId = requestAnimationFrame(loop);
@@ -809,13 +920,15 @@
   function endGame() {
     mode = "over";
     hud.classList.add("hidden");
+    stopMusic();
     const mine = leaderboard.find((s) => s.name.toLowerCase() === playerName.toLowerCase());
     const myBest = mine ? mine.score : 0;
-    bestMsgEl.textContent = score > myBest && score > 0 ? "🎉 Rekor baru!" : "";
+    const isRecord = score > myBest && score > 0;
+    bestMsgEl.textContent = isRecord ? "🎉 Rekor baru!" : "";
     overNameEl.textContent = playerName;
     finalScoreEl.textContent = String(score);
     showScreen(screenOver);
-    playGameOverSfx(); // fail music in both mic and tap modes
+    if (isRecord) playRecordFanfare(); else playGameOverSfx(); // both modes
     submitScore(playerName, score); // saves + refreshes ranking (async)
     if (rafId) cancelAnimationFrame(rafId);
   }
@@ -984,6 +1097,31 @@
     if (mode === "playing" || mode === "crash") return;
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => applyOrientation(orientation), 150);
+  });
+
+  // Mute toggle (bottom-right). Persists across sessions.
+  const muteBtn = document.createElement("button");
+  muteBtn.id = "mute-btn";
+  muteBtn.type = "button";
+  muteBtn.setAttribute("aria-label", "Bisukan / nyalakan suara");
+  muteBtn.textContent = muted ? "🔇" : "🔊";
+  Object.assign(muteBtn.style, {
+    position: "absolute", bottom: "12px", right: "12px", zIndex: "30",
+    width: "44px", height: "44px", borderRadius: "50%", border: "none",
+    cursor: "pointer", fontSize: "20px", lineHeight: "44px", padding: "0",
+    background: "rgba(0,0,0,0.45)", color: "#fff",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
+  });
+  (document.getElementById("game-wrap") || document.body).appendChild(muteBtn);
+  muteBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    muted = !muted;
+    localStorage.setItem(MUTED_KEY, muted ? "1" : "0");
+    muteBtn.textContent = muted ? "🔇" : "🔊";
+    ensureSfx();
+    if (muted) stopMusic();
+    else if (mode === "playing" && !usingMic) startMusic();
+    muteBtn.blur();
   });
 
   fetchLeaderboard();
