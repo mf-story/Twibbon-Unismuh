@@ -480,6 +480,23 @@
       o.start(t + d); o.stop(t + d + 0.13);
     });
   }
+  // A descending "fail" jingle for game over (plays in both mic and tap modes).
+  function playGameOverSfx() {
+    if (!sfxCtx) return;
+    const t = sfxCtx.currentTime;
+    const notes = [[523, 0], [440, 0.18], [349, 0.36], [262, 0.56]]; // C5 A4 F4 C4
+    notes.forEach(([f, d]) => {
+      const o = sfxCtx.createOscillator();
+      const g = sfxCtx.createGain();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(f, t + d);
+      g.gain.setValueAtTime(0.0001, t + d);
+      g.gain.exponentialRampToValueAtTime(0.24, t + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.3);
+      o.connect(g); g.connect(sfxCtx.destination);
+      o.start(t + d); o.stop(t + d + 0.32);
+    });
+  }
   function playCrashSfx() {
     if (!sfxCtx) return;
     const t = sfxCtx.currentTime;
@@ -753,6 +770,7 @@
 
   async function startWithMic() {
     if (!requireName()) return;
+    ensureSfx(); // enable audio (this click is a user gesture) - for the game-over jingle
     btnStart.disabled = true;
     try {
       if (!usingMic) {
@@ -797,6 +815,7 @@
     overNameEl.textContent = playerName;
     finalScoreEl.textContent = String(score);
     showScreen(screenOver);
+    playGameOverSfx(); // fail music in both mic and tap modes
     submitScore(playerName, score); // saves + refreshes ranking (async)
     if (rafId) cancelAnimationFrame(rafId);
   }
