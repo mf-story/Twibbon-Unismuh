@@ -87,6 +87,25 @@ function writeScores(scores) {
   fs.writeFileSync(SCORES_JSON, JSON.stringify({ scores }, null, 2), "utf8");
 }
 
+// ---------- Kehadiran pemain (live, hanya di memori) ----------
+// Peta id-klien -> { ts, playing }. Klien mengirim heartbeat berkala.
+const presence = new Map();
+const PRESENCE_TTL = 12000; // dianggap keluar jika tak ada heartbeat 12 detik
+
+function prunePresence() {
+  const now = Date.now();
+  for (const [id, v] of presence) {
+    if (now - v.ts > PRESENCE_TTL) presence.delete(id);
+  }
+}
+
+function presenceCounts() {
+  prunePresence();
+  let playing = 0;
+  for (const v of presence.values()) if (v.playing) playing++;
+  return { playing, online: presence.size };
+}
+
 // Pastikan folder & metadata frame ada (penting saat volume masih kosong).
 function ensureSeed() {
   if (!fs.existsSync(FRAMES_DIR)) fs.mkdirSync(FRAMES_DIR, { recursive: true });
@@ -224,6 +243,26 @@ async function handleApi(req, res, urlPath) {
     scores.sort((a, b) => b.score - a.score);
     writeScores(scores.slice(0, 500));
     return sendJson(res, 200, { scores: scores.slice(0, 20) });
+  }
+
+  // Kehadiran live: heartbeat dari pemain. Body: { id, playing }.
+  if (req.method === "POST" && urlPath === "/api/heartbeat") {
+    let body;
+    try {
+      const buf = await readBody(req, 2 * 1024);
+      body = JSON.parse(buf.toString("utf8"));
+    } catch {
+      return sendJson(res, 400, { error: "Body tidak valid" });
+    }
+    const id = String(body.id || "").slice(0, 64);
+    if (!id) return sendJson(res, 400, { error: "id wajib diisi" });
+    presence.set(id, { ts: Date.now(), playing: !!body.playing });
+    return sendJson(res, 200, presenceCounts());
+  }
+
+  // Kehadiran live: jumlah yang online / sedang bermain.
+  if (req.method === "GET" && urlPath === "/api/online") {
+    return sendJson(res, 200, presenceCounts());
   }
 
   return sendJson(res, 404, { error: "Endpoint tidak ditemukan" });

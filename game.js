@@ -118,6 +118,36 @@
     renderLeaderboard();
   }
 
+  // ---------- Live player presence ----------
+  const liveBadge = document.getElementById("live-badge");
+  const liveText = document.getElementById("live-text");
+  // Id klien unik & stabil untuk sesi ini (agar tidak dihitung ganda).
+  let clientId = sessionStorage.getItem("voiceFlyGame_cid");
+  if (!clientId) {
+    clientId = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    sessionStorage.setItem("voiceFlyGame_cid", clientId);
+  }
+  function showLive(counts) {
+    if (!liveBadge || !liveText || !counts) return;
+    const playing = counts.playing || 0;
+    const online = counts.online || 0;
+    // Tampilkan yang sedang bermain; jika tak ada, tampilkan yang online.
+    if (playing > 0) liveText.textContent = `${playing} sedang bermain`;
+    else liveText.textContent = `${online} sedang online`;
+    liveBadge.classList.remove("hidden");
+  }
+  async function sendHeartbeat() {
+    try {
+      const r = await fetch("api/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({ id: clientId, playing: mode === "playing" }),
+      });
+      if (r.ok) showLive(await r.json());
+    } catch (e) { if (liveBadge) liveBadge.classList.add("hidden"); }
+  }
+
   // ---------- Game constants ----------
   const GRAVITY = 780;            // px/s^2 pulling the character down
   const LIFT_ACCEL = 1350;       // px/s^2 continuous upward while sound sustains
@@ -912,6 +942,7 @@
     hud.classList.remove("hidden");
     playStartSfx();
     startMusic();
+    sendHeartbeat();
     lastTime = performance.now();
     if (rafId) cancelAnimationFrame(rafId);
     rafId = requestAnimationFrame(loop);
@@ -930,6 +961,7 @@
     showScreen(screenOver);
     if (isRecord) playRecordFanfare(); else playGameOverSfx(); // both modes
     submitScore(playerName, score); // saves + refreshes ranking (async)
+    sendHeartbeat();
     if (rafId) cancelAnimationFrame(rafId);
   }
 
@@ -1126,4 +1158,6 @@
 
   fetchLeaderboard();
   applyOrientation("landscape");
+  sendHeartbeat();
+  setInterval(sendHeartbeat, 5000);
 })();
