@@ -63,6 +63,15 @@ html, body {
 }
 .admin-link:hover { color: var(--text); border-color: var(--brand); background: rgba(47,123,246,.10); }
 
+/* Tombol masuk game agar menonjol */
+.game-link {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  box-shadow: 0 10px 24px -12px rgba(47,123,246,.7);
+}
+.game-link:hover { color: #fff; border-color: transparent; filter: brightness(1.08); background: linear-gradient(135deg, var(--brand), var(--brand-2)); }
+
 .install-btn {
   border: none;
   cursor: pointer;
@@ -274,7 +283,17 @@ input[type="range"]::-moz-range-thumb {
   }
   .panel { order: 2; }
   /* Header ikut tergulung agar preview bisa menempel di atas. */
-  .topbar { position: static; }
+  .topbar {
+    position: static;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  .brand { gap: 10px; }
+  .logo-img { width: 44px; height: 44px; }
+  .brand h1 { font-size: 18px; }
+  .brand p { font-size: 11px; }
+  .admin-link { padding: 8px 13px; font-size: 12.5px; }
   /* Preview menempel di atas saat menggulir ke kontrol penyesuaian. */
   .stage {
     position: sticky;
@@ -284,8 +303,8 @@ input[type="range"]::-moz-range-thumb {
     padding: 8px 0 10px;
     gap: 8px;
   }
-  /* Perkecil sedikit agar kontrol muat terlihat bersama preview. */
-  .canvas-wrap { max-width: 56vh; margin: 0 auto; }
+  /* Jangan sampai lebih lebar dari layar HP (portrait). */
+  .canvas-wrap { max-width: min(56vh, 92vw); margin: 0 auto; }
   .stage-tip { font-size: 12px; }
 }
 
