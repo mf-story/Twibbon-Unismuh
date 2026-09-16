@@ -318,7 +318,7 @@ html, body {
 #mic-status {
   position: absolute;
   top: 12px;
-  left: 12px;
+  right: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
