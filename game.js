@@ -106,7 +106,17 @@
 
   function applyOrientation(o) {
     orientation = o;
-    const cfg = ORIENTATIONS[o];
+    let cfg;
+    if (o === "portrait") {
+      // match the device screen aspect so it fills a phone with no black bars
+      const vw = window.innerWidth || 480;
+      const vh = window.innerHeight || 800;
+      const w = 480;
+      const h = Math.max(720, Math.min(1180, Math.round(w * (vh / vw))));
+      cfg = { w, h };
+    } else {
+      cfg = ORIENTATIONS.landscape;
+    }
     canvas.width = cfg.w;
     canvas.height = cfg.h;
     W = cfg.w;
@@ -115,6 +125,7 @@
     GAP_HEIGHT_BASE = Math.round(H * 0.40);
     GAP_MIN = Math.round(H * 0.28);
     PIPE_MARGIN = Math.round(H * 0.11);
+    canvas.style.aspectRatio = `${W} / ${H}`;
     canvas.classList.toggle("landscape", o === "landscape");
     canvas.classList.toggle("portrait", o === "portrait");
     drawIdleFrame();
@@ -844,6 +855,15 @@
   const savedSens = parseInt(localStorage.getItem(SENS_KEY) || "6", 10);
   sensitivityInput.value = savedSens;
   setSensitivity(savedSens);
+
+  // Re-fit the canvas to the screen on rotate / viewport change, but only when
+  // not mid-game so the layout doesn't jump under the player.
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    if (mode === "playing" || mode === "crash") return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => applyOrientation(orientation), 150);
+  });
 
   renderLeaderboard();
   applyOrientation("landscape");

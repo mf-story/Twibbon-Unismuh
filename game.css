@@ -33,6 +33,7 @@ html, body {
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,19 +43,21 @@ html, body {
 #game {
   max-width: 100vw;
   max-height: 100vh;
+  max-height: 100dvh;
   background: #7ec8e3;
   display: block;
   touch-action: none;
 }
+/* portrait canvas is sized in JS to match the device aspect, so fill both
+   dimensions for an exact full-screen fit with no black bars */
 #game.portrait {
-  width: auto;
+  width: 100vw;
   height: 100vh;
-  aspect-ratio: 480 / 800;
+  height: 100dvh;
 }
 #game.landscape {
   width: 100vw;
   height: auto;
-  aspect-ratio: 1422 / 800;
 }
 
 .screen {
