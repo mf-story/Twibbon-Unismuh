@@ -3,3 +3,4 @@ seed/
 *.log
 .DS_Store
 Thumbs.db
+frames/scores.json

@@ -15,6 +15,8 @@ const ROOT = __dirname;
 const FRAMES_DIR = path.join(ROOT, "frames");
 // Metadata frame disimpan di dalam folder frames agar mudah dijadikan volume persisten.
 const FRAMES_JSON = path.join(FRAMES_DIR, "frames.json");
+// Papan peringkat game, juga di folder frames agar ikut volume persisten.
+const SCORES_JSON = path.join(FRAMES_DIR, "scores.json");
 // Data awal (dibuat saat build) untuk mengisi volume yang masih kosong.
 const SEED_DIR = path.join(ROOT, "seed");
 // Lapisan dasar kartu share (latar + logo + teks; frame ditempel dinamis).
@@ -68,6 +70,21 @@ function readFrames() {
 
 function writeFrames(frames) {
   fs.writeFileSync(FRAMES_JSON, JSON.stringify({ frames }, null, 2), "utf8");
+}
+
+// ---------- Papan peringkat game ----------
+function readScores() {
+  try {
+    const data = JSON.parse(fs.readFileSync(SCORES_JSON, "utf8"));
+    return Array.isArray(data.scores) ? data.scores : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeScores(scores) {
+  if (!fs.existsSync(FRAMES_DIR)) fs.mkdirSync(FRAMES_DIR, { recursive: true });
+  fs.writeFileSync(SCORES_JSON, JSON.stringify({ scores }, null, 2), "utf8");
 }
 
 // Pastikan folder & metadata frame ada (penting saat volume masih kosong).
@@ -177,6 +194,36 @@ async function handleApi(req, res, urlPath) {
     frames.splice(idx, 1);
     writeFrames(frames);
     return sendJson(res, 200, { ok: true });
+  }
+
+  // Papan peringkat game (publik): ambil ranking.
+  if (req.method === "GET" && urlPath === "/api/scores") {
+    const top = readScores().sort((a, b) => b.score - a.score).slice(0, 20);
+    return sendJson(res, 200, { scores: top });
+  }
+
+  // Papan peringkat game: kirim skor (publik, tanpa auth).
+  if (req.method === "POST" && urlPath === "/api/scores") {
+    let body;
+    try {
+      const buf = await readBody(req, 8 * 1024);
+      body = JSON.parse(buf.toString("utf8"));
+    } catch {
+      return sendJson(res, 400, { error: "Body tidak valid" });
+    }
+    const name = String(body.name || "").replace(/[<>]/g, "").trim().slice(0, 20);
+    let score = parseInt(body.score, 10);
+    if (!name) return sendJson(res, 400, { error: "Nama wajib diisi" });
+    if (!Number.isFinite(score) || score < 0) score = 0;
+    score = Math.min(score, 100000);
+
+    const scores = readScores();
+    const existing = scores.find((s) => s.name.toLowerCase() === name.toLowerCase());
+    if (existing) { if (score > existing.score) existing.score = score; }
+    else scores.push({ name, score });
+    scores.sort((a, b) => b.score - a.score);
+    writeScores(scores.slice(0, 500));
+    return sendJson(res, 200, { scores: scores.slice(0, 20) });
   }
 
   return sendJson(res, 404, { error: "Endpoint tidak ditemukan" });

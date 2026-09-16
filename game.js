@@ -54,24 +54,25 @@
     ));
   }
 
-  function loadScores() {
+  function loadLocalScores() {
     try { return JSON.parse(localStorage.getItem(SCORES_KEY) || "[]"); }
     catch (e) { return []; }
   }
 
-  function saveScore(name, sc) {
-    const scores = loadScores();
+  function saveLocalScore(name, sc) {
+    const scores = loadLocalScores();
     const existing = scores.find((s) => s.name.toLowerCase() === name.toLowerCase());
     if (existing) { if (sc > existing.score) existing.score = sc; }
     else scores.push({ name, score: sc });
     scores.sort((a, b) => b.score - a.score);
     localStorage.setItem(SCORES_KEY, JSON.stringify(scores.slice(0, 50)));
-    best = scores.length ? scores[0].score : 0;
-    bestEl.textContent = `Terbaik: ${best}`;
+    return scores;
   }
 
+  let leaderboard = []; // scores shown (from server, or local fallback when offline)
+
   function renderLeaderboard() {
-    const scores = loadScores().sort((a, b) => b.score - a.score).slice(0, 5);
+    const scores = leaderboard.slice(0, 5);
     best = scores.length ? scores[0].score : 0;
     bestEl.textContent = `Terbaik: ${best}`;
     const html = scores.length
@@ -83,6 +84,36 @@
       : `<li class="lb-empty">Belum ada skor</li>`;
     lbListStart.innerHTML = html;
     lbListOver.innerHTML = html;
+  }
+
+  // Shared online ranking (server), with local fallback when offline.
+  async function fetchLeaderboard() {
+    try {
+      const r = await fetch("api/scores", { cache: "no-store" });
+      if (r.ok) {
+        const d = await r.json();
+        if (Array.isArray(d.scores)) { leaderboard = d.scores; renderLeaderboard(); return; }
+      }
+    } catch (e) { /* offline / no server */ }
+    leaderboard = loadLocalScores().sort((a, b) => b.score - a.score);
+    renderLeaderboard();
+  }
+
+  async function submitScore(name, sc) {
+    saveLocalScore(name, sc); // keep an offline backup regardless
+    try {
+      const r = await fetch("api/scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, score: sc }),
+      });
+      if (r.ok) {
+        const d = await r.json();
+        if (Array.isArray(d.scores)) { leaderboard = d.scores; renderLeaderboard(); return; }
+      }
+    } catch (e) { /* offline */ }
+    leaderboard = loadLocalScores().sort((a, b) => b.score - a.score);
+    renderLeaderboard();
   }
 
   // ---------- Game constants ----------
@@ -691,13 +722,13 @@
   function endGame() {
     mode = "over";
     hud.classList.add("hidden");
-    const prevBest = best;
-    saveScore(playerName, score);
-    bestMsgEl.textContent = score > prevBest && score > 0 ? "🎉 Rekor baru!" : "";
+    const mine = leaderboard.find((s) => s.name.toLowerCase() === playerName.toLowerCase());
+    const myBest = mine ? mine.score : 0;
+    bestMsgEl.textContent = score > myBest && score > 0 ? "🎉 Rekor baru!" : "";
     overNameEl.textContent = playerName;
     finalScoreEl.textContent = String(score);
-    renderLeaderboard();
     showScreen(screenOver);
+    submitScore(playerName, score); // saves + refreshes ranking (async)
     if (rafId) cancelAnimationFrame(rafId);
   }
 
@@ -824,7 +855,7 @@
     btnHome.blur();
     stopMic();
     mode = "start";
-    renderLeaderboard();
+    fetchLeaderboard();
     nameInput.value = playerName;
     showScreen(screenStart);
     drawIdleFrame();
@@ -866,6 +897,6 @@
     resizeTimer = setTimeout(() => applyOrientation(orientation), 150);
   });
 
-  renderLeaderboard();
+  fetchLeaderboard();
   applyOrientation("landscape");
 })();
