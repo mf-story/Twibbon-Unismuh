@@ -436,6 +436,7 @@
         p.passed = true;
         score++;
         scoreEl.textContent = score;
+        if (!usingMic) playScoreSfx(); // point "ding" in tap/space mode
       }
     });
   }
@@ -455,13 +456,29 @@
     const o = sfxCtx.createOscillator();
     const g = sfxCtx.createGain();
     o.type = "square";
-    o.frequency.setValueAtTime(420, t);
-    o.frequency.exponentialRampToValueAtTime(780, t + 0.09);
+    o.frequency.setValueAtTime(440, t);
+    o.frequency.exponentialRampToValueAtTime(880, t + 0.08);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.22, t + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    g.gain.exponentialRampToValueAtTime(0.2, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
     o.connect(g); g.connect(sfxCtx.destination);
-    o.start(t); o.stop(t + 0.16);
+    o.start(t); o.stop(t + 0.15);
+  }
+  // Two quick ascending blips - classic "point"/coin sound.
+  function playScoreSfx() {
+    if (!sfxCtx) return;
+    const t = sfxCtx.currentTime;
+    [[988, 0], [1319, 0.08]].forEach(([f, d]) => {
+      const o = sfxCtx.createOscillator();
+      const g = sfxCtx.createGain();
+      o.type = "square";
+      o.frequency.setValueAtTime(f, t + d);
+      g.gain.setValueAtTime(0.0001, t + d);
+      g.gain.exponentialRampToValueAtTime(0.18, t + d + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.11);
+      o.connect(g); g.connect(sfxCtx.destination);
+      o.start(t + d); o.stop(t + d + 0.13);
+    });
   }
   function playCrashSfx() {
     if (!sfxCtx) return;
