@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vokal Voyager — Twibbie</title>
+<link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <div id="game-wrap">
+    <a id="back-home" href="index.html" aria-label="Kembali ke Twibbon">← Twibbon</a>
+    <canvas id="game" width="480" height="800"></canvas>
+
+    <!-- Listening status + live voice level -->
+    <div id="mic-status"><span id="mic-status-dot"></span><span id="mic-status-text">Mikrofon nonaktif</span></div>
+    <div id="mic-transcript"></div>
+
+    <!-- Start screen -->
+    <div id="screen-start" class="screen">
+      <div class="logo-row">
+        <img src="logo-unismuh.png" alt="Unismuh Makassar" class="logo">
+        <img src="logo-gift.png" alt="Green Islamic Futuristic" class="logo logo-gift">
+      </div>
+      <h1>🎤 VOKAL VOYAGER</h1>
+      <p class="tagline">Terbang setinggi suaramu — hindari pipa, kejar skor tertinggi!</p>
+
+      <input id="player-name" class="name-input" type="text" maxlength="14" placeholder="👤 Masukkan nama kamu" autocomplete="off">
+
+      <div class="settings-card">
+        <div class="setting-row">
+          <span class="setting-label">Orientasi Layar</span>
+          <div id="orient-select">
+            <button id="orient-portrait" class="mode-btn">📱 Potrait</button>
+            <button id="orient-landscape" class="mode-btn active">🖥️ Landscape</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">🎚️ Sensitivitas Mic: <b id="sens-val">6</b></span>
+          <input type="range" id="sensitivity" min="1" max="10" value="6">
+          <div id="sens-hint"><span>Kurang peka</span><span>Sangat peka</span></div>
+        </div>
+      </div>
+
+      <div class="start-actions">
+        <button id="btn-start" class="btn">🎙️ Izinkan Mikrofon & Mulai</button>
+        <button id="btn-start-tap" class="btn btn-secondary">👆 Main Tanpa Mikrofon (Tap/Spasi)</button>
+      </div>
+      <div class="leaderboard-card">
+        <h3>🏆 Papan Peringkat</h3>
+        <ol id="lb-list-start" class="lb-list"></ol>
+      </div>
+      <p id="mic-error" class="error"></p>
+    </div>
+
+    <!-- Calibrating screen -->
+    <div id="screen-calibrate" class="screen hidden">
+      <h2>Menyiapkan mikrofon...</h2>
+      <p id="calibrate-msg">Mohon tunggu sebentar</p>
+      <div class="spinner"></div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+      <div id="score">0</div>
+      <div id="best">Terbaik: 0</div>
+    </div>
+
+    <!-- Game over screen -->
+    <div id="screen-over" class="screen hidden">
+      <h2>💥 Game Selesai!</h2>
+      <p>Skor <b id="over-name">-</b>: <span id="final-score">0</span></p>
+      <p id="best-msg"></p>
+      <div class="leaderboard-card">
+        <h3>🏆 Papan Peringkat</h3>
+        <ol id="lb-list-over" class="lb-list"></ol>
+      </div>
+      <div class="start-actions">
+        <button id="btn-retry" class="btn">🔄 Main Lagi</button>
+        <button id="btn-home" class="btn btn-secondary">🏠 Kembali ke Beranda</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
