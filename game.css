@@ -209,8 +209,8 @@ html, body {
 .start-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: min(340px, 88vw);
+  gap: 8px;
+  width: min(280px, 78vw);
   margin-top: 4px;
 }
 .start-actions .btn { margin-top: 0; width: 100%; }
@@ -240,15 +240,15 @@ html, body {
 }
 
 .btn {
-  font-size: clamp(15px, 3vw, 18px);
+  font-size: clamp(13px, 2.6vw, 15px);
   font-weight: 700;
-  padding: 14px 28px;
+  padding: 10px 18px;
   border: none;
   border-radius: 40px;
   background: linear-gradient(180deg, #ffd93d, #ffb700);
   color: #402a00;
   cursor: pointer;
-  box-shadow: 0 6px 0 #b57d00;
+  box-shadow: 0 5px 0 #b57d00;
   margin-top: 8px;
   transition: transform .08s;
 }
