@@ -130,10 +130,7 @@
   function showLive(counts) {
     if (!liveBadge || !liveText || !counts) return;
     const playing = counts.playing || 0;
-    const online = counts.online || 0;
-    // Tampilkan yang sedang bermain; jika tak ada, tampilkan yang online.
-    if (playing > 0) liveText.textContent = `${playing} sedang bermain`;
-    else liveText.textContent = `${online} sedang online`;
+    liveText.textContent = `${playing} sedang bermain`;
     liveBadge.classList.remove("hidden");
   }
   async function sendHeartbeat() {
@@ -1159,5 +1156,5 @@
   fetchLeaderboard();
   applyOrientation("landscape");
   sendHeartbeat();
-  setInterval(sendHeartbeat, 5000);
+  setInterval(sendHeartbeat, 3000);
 })();
