@@ -440,7 +440,57 @@
     });
   }
 
-  // ---------- Character ----------
+  // ---------- Sound effects (tap/space mode only, generated via Web Audio) ----------
+  let sfxCtx = null;
+  function ensureSfx() {
+    if (!sfxCtx) {
+      try { sfxCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) { sfxCtx = null; return; }
+    }
+    if (sfxCtx.state === "suspended") sfxCtx.resume();
+  }
+  function playFlapSfx() {
+    if (!sfxCtx) return;
+    const t = sfxCtx.currentTime;
+    const o = sfxCtx.createOscillator();
+    const g = sfxCtx.createGain();
+    o.type = "square";
+    o.frequency.setValueAtTime(420, t);
+    o.frequency.exponentialRampToValueAtTime(780, t + 0.09);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    o.connect(g); g.connect(sfxCtx.destination);
+    o.start(t); o.stop(t + 0.16);
+  }
+  function playCrashSfx() {
+    if (!sfxCtx) return;
+    const t = sfxCtx.currentTime;
+    const dur = 0.45;
+    // noise burst through a falling low-pass filter
+    const buf = sfxCtx.createBuffer(1, Math.floor(sfxCtx.sampleRate * dur), sfxCtx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    const src = sfxCtx.createBufferSource(); src.buffer = buf;
+    const lp = sfxCtx.createBiquadFilter(); lp.type = "lowpass";
+    lp.frequency.setValueAtTime(1400, t);
+    lp.frequency.exponentialRampToValueAtTime(200, t + dur);
+    const gn = sfxCtx.createGain();
+    gn.gain.setValueAtTime(0.4, t);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(lp); lp.connect(gn); gn.connect(sfxCtx.destination);
+    src.start(t);
+    // plus a quick descending tone for the "thud"
+    const o = sfxCtx.createOscillator(); const g2 = sfxCtx.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(300, t);
+    o.frequency.exponentialRampToValueAtTime(60, t + dur);
+    g2.gain.setValueAtTime(0.22, t);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g2); g2.connect(sfxCtx.destination);
+    o.start(t); o.stop(t + dur);
+  }
+
   // ---------- Character effects (glow, sparkle trail, flap pulse) ----------
   function spawnFlapParticles() {
     for (let i = 0; i < 8; i++) {
@@ -508,6 +558,7 @@
     shakeUntil = elapsed + 0.5;
     hud.classList.add("hidden");
     spawnExplosion();
+    if (!usingMic) playCrashSfx(); // crash sound in tap/space mode
   }
 
   function drawCharacter() {
@@ -706,6 +757,7 @@
   function startWithTap() {
     if (!requireName()) return;
     stopMic();
+    ensureSfx(); // this click is a user gesture, so audio is allowed
     resetGame();
     beginPlay();
   }
@@ -763,6 +815,7 @@
         character.vy = Math.min(character.vy, FLAP_KICK_VY);
         lastFlapTime = elapsed;
         spawnFlapParticles();
+        if (!usingMic) playFlapSfx(); // sound feedback in tap/space mode
       }
       character.vy -= LIFT_ACCEL * liftStrength * dt;
       wasLoud = loudNow;
