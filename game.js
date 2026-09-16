@@ -1154,7 +1154,7 @@
   });
 
   fetchLeaderboard();
-  applyOrientation("landscape");
+  applyOrientation("portrait");
   sendHeartbeat();
   setInterval(sendHeartbeat, 3000);
 })();
