@@ -147,7 +147,7 @@ window.Games.camera = {
         accumulating = true;
         leftAccum = rightAccum = 0;
         stage.classList.add("live");
-        var t = 5;
+        var t = 15;
         countEl.textContent = t;
         countEl.classList.add("go");
         UI.sfx.tick();
