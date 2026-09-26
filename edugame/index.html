@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a1c46" />
+  <title>EduGame Hub — Media Belajar Interaktif</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- ================= TOP BAR ================= -->
+  <header class="topbar">
+    <div class="brand" id="homeBtn" role="button" tabindex="0" title="Kembali ke Beranda">
+      <span class="brand-mark">🎓</span>
+      <span class="brand-text">EduGame <b>Hub</b></span>
+    </div>
+    <div class="topbar-center">
+      <button class="chip" id="subjectChip" title="Pilih mata pelajaran">
+        <span id="subjectChipIcon">📚</span>
+        <span id="subjectChipName">Pilih Mapel</span>
+        <span class="chip-caret">▾</span>
+      </button>
+      <button class="chip chip-soft" id="materiChip" title="Pilih materi & sub-materi">
+        <span>🧩</span>
+        <span id="materiChipName">Semua Materi</span>
+        <span class="chip-caret">▾</span>
+      </button>
+    </div>
+    <div class="topbar-actions">
+      <a class="icon-btn" href="../index.html" title="Kembali ke Twibbon">← <span class="lbl">Twibbon</span></a>
+      <button class="icon-btn" id="editorBtn" title="Kelola materi / bank soal">✏️ <span class="lbl">Materi</span></button>
+      <button class="icon-btn" id="soundBtn" title="Suara aktif/nonaktif">🔊</button>
+      <button class="icon-btn" id="fullscreenBtn" title="Layar penuh">⛶</button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN VIEW ================= -->
+  <main id="view" class="view"><!-- screens injected here --></main>
+
+  <!-- ================= TOAST ================= -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <!-- ================= SCRIPTS (classic, offline-friendly via file://) ============ -->
+  <script src="js/data.js"></script>
+  <script src="js/curriculum.js"></script>
+  <script src="js/bank.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/games/quiz.js"></script>
+  <script src="js/games/wheel.js"></script>
+  <script src="js/games/matching.js"></script>
+  <script src="js/games/hangman.js"></script>
+  <script src="js/games/snakes.js"></script>
+  <script src="js/games/memory.js"></script>
+  <script src="js/games/camera.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/ai-panel.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
