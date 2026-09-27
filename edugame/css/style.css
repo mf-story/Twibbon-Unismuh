@@ -48,6 +48,7 @@ body {
     radial-gradient(120% 90% at -10% 110%, #e6fbf5 0%, transparent 55%),
     var(--paper);
   overflow: hidden;
+  display: flex; flex-direction: column;
   -webkit-user-select: none; user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -59,6 +60,7 @@ button { font-family: var(--font-body); cursor: pointer; }
 /* ============================ TOP BAR ============================ */
 .topbar {
   height: var(--bar-h);
+  flex: none;
   display: flex; align-items: center; gap: 16px;
   padding: 0 22px;
   background: linear-gradient(100deg, var(--navy) 0%, var(--navy-2) 60%, #1a2f66 100%);
@@ -94,10 +96,20 @@ button { font-family: var(--font-body); cursor: pointer; }
 }
 .icon-btn:hover { background: rgba(255,255,255,.22); transform: translateY(-1px); }
 .icon-btn .lbl { font-size: 17px; }
-@media (max-width: 720px) { .icon-btn .lbl { display: none; } .brand-text { display: none; } }
+@media (max-width: 720px) {
+  .icon-btn .lbl { display: none; }
+  .brand-text { display: none; }
+  .topbar { height: auto; min-height: var(--bar-h); flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
+  .brand { order: 1; padding: 4px 6px; }
+  .topbar-actions { order: 2; margin-left: auto; gap: 8px; }
+  .topbar-center { order: 3; flex-basis: 100%; gap: 8px; }
+  .topbar-center .chip { flex: 1 1 0; min-width: 0; justify-content: center; overflow: hidden; }
+  .topbar-center .chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .icon-btn { padding: 9px 12px; font-size: 18px; }
+}
 
 /* ============================ VIEW / SCREENS ============================ */
-.view { height: calc(100vh - var(--bar-h)); overflow-y: auto; position: relative; }
+.view { flex: 1 1 auto; min-height: 0; overflow-y: auto; position: relative; }
 .screen { min-height: 100%; padding: 34px clamp(20px, 5vw, 70px); animation: fadeUp .35s ease; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
